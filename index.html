@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IQC Approval System</title>
+<title>HSSI IQC Approval System</title>
 <style>
   :root{
     --blue:#2563eb;
@@ -111,7 +111,7 @@
   }
   .logout-btn:hover{background:#f1f5f9;}
 
-  main{padding:24px;max-width:1200px;margin:0 auto;}
+  main{padding:24px 24px 48px;max-width:1200px;margin:0 auto;}
 
   table{
     width:100%;
@@ -207,7 +207,7 @@
 <!-- ============ LOGIN SCREEN ============ -->
 <div id="loginScreen">
   <form class="login-card" id="loginForm">
-    <h1>IQC Approval System</h1>
+    <h1>HSSI IQC Approval System</h1>
     <p>Silakan login untuk melanjutkan</p>
     <div class="field">
       <label for="username">Username</label>
@@ -254,7 +254,7 @@
 <!-- ============ APP SCREEN ============ -->
 <div id="appScreen">
   <header>
-    <h2>IQC Approval System</h2>
+    <h2>HSSI IQC Approval System</h2>
     <div class="user-chip">
       <span id="userLabel"></span>
       <span class="role-badge" id="roleBadge"></span>
@@ -278,6 +278,12 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<footer style="position:fixed;left:0;right:0;bottom:0;text-align:center;padding:8px 0;
+  font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.85);
+  border-top:1px solid var(--border);backdrop-filter:blur(2px);z-index:10;">
+  HSSI IQC AS V1.0 | © Sopari 2026
+</footer>
 
 <script>
 /* =========================================================
