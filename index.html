@@ -219,6 +219,35 @@
     </div>
     <button type="submit" class="btn" id="loginBtn">Login</button>
     <div class="error-msg" id="loginError"></div>
+    <div style="text-align:center;margin-top:6px;">
+      <a href="#" id="showChangePw" style="font-size:12.5px;color:var(--blue);text-decoration:none;">Ganti Password</a>
+    </div>
+  </form>
+
+  <form class="login-card" id="changePwForm" style="display:none;">
+    <h1>Ganti Password</h1>
+    <p>Masukkan username dan password lama Anda</p>
+    <div class="field">
+      <label for="cpUsername">Username</label>
+      <input type="text" id="cpUsername" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="cpOldPassword">Password Lama</label>
+      <input type="password" id="cpOldPassword" autocomplete="current-password" required>
+    </div>
+    <div class="field">
+      <label for="cpNewPassword">Password Baru</label>
+      <input type="password" id="cpNewPassword" autocomplete="new-password" required minlength="4">
+    </div>
+    <div class="field">
+      <label for="cpConfirmPassword">Konfirmasi Password Baru</label>
+      <input type="password" id="cpConfirmPassword" autocomplete="new-password" required minlength="4">
+    </div>
+    <button type="submit" class="btn" id="changePwBtn">Simpan Password Baru</button>
+    <div class="error-msg" id="changePwError"></div>
+    <div style="text-align:center;margin-top:6px;">
+      <a href="#" id="backToLogin" style="font-size:12.5px;color:var(--blue);text-decoration:none;">&larr; Kembali ke Login</a>
+    </div>
   </form>
 </div>
 
@@ -323,11 +352,72 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   }
 });
 
+/* ---------- SHOW / HIDE CHANGE PASSWORD FORM ---------- */
+document.getElementById('showChangePw').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('changePwForm').style.display = 'block';
+  document.getElementById('changePwError').textContent = '';
+  document.getElementById('changePwForm').reset();
+});
+
+document.getElementById('backToLogin').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('changePwForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('loginError').textContent = '';
+});
+
+/* ---------- SUBMIT CHANGE PASSWORD ---------- */
+document.getElementById('changePwForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('cpUsername').value.trim();
+  const oldPassword = document.getElementById('cpOldPassword').value;
+  const newPassword = document.getElementById('cpNewPassword').value;
+  const confirmPassword = document.getElementById('cpConfirmPassword').value;
+  const btn = document.getElementById('changePwBtn');
+  const errBox = document.getElementById('changePwError');
+  errBox.textContent = '';
+
+  if (newPassword !== confirmPassword) {
+    errBox.textContent = 'Konfirmasi password baru tidak cocok';
+    return;
+  }
+  if (newPassword.length < 4) {
+    errBox.textContent = 'Password baru minimal 4 karakter';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+
+  try {
+    const result = await apiCall({ action: 'changePassword', username, oldPassword, newPassword });
+    if (result.success) {
+      showToast(result.message || 'Password berhasil diubah');
+      document.getElementById('changePwForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('loginForm').reset();
+      document.getElementById('username').value = username;
+      document.getElementById('password').focus();
+    } else {
+      errBox.textContent = result.message || 'Gagal mengubah password';
+    }
+  } catch (err) {
+    errBox.textContent = 'Gagal terhubung ke server. Periksa GAS_API_URL.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Simpan Password Baru';
+  }
+});
+
 document.getElementById('logoutBtn').addEventListener('click', () => {
   clearSession();
   currentUser = null;
   document.getElementById('appScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('changePwForm').style.display = 'none';
   document.getElementById('loginForm').reset();
 });
 
