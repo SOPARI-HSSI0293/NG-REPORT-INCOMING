@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Approval - PT. HSSI</title>
+    <!-- Menggunakan Bootstrap 5 untuk UI yang cepat dan responsif -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f7f6;
+        }
+        /* Menyembunyikan dashboard secara default */
+        #dashboard-section {
+            display: none; 
+        }
+        .card-approval {
+            border-left: 5px solid #0d6efd;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= BAGIAN LOGIN ================= -->
+    <div class="container mt-5" id="login-section">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <h3 class="fw-bold text-primary">PT. HSSI</h3>
+                            <p class="text-muted">Portal Approval Terintegrasi</p>
+                        </div>
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100" onclick="prosesLogin()">Login</button>
+                        </form>
+                        <div id="loginAlert" class="alert alert-danger mt-3 d-none" role="alert">
+                            Username atau Password salah!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BAGIAN DASHBOARD ================= -->
+    <div id="dashboard-section">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container">
+                <span class="navbar-brand mb-0 h1">Portal Approval</span>
+                <div class="d-flex align-items-center">
+                    <span class="text-white me-3" id="userGreeting">Halo, User</span>
+                    <button class="btn btn-sm btn-light" onclick="prosesLogout()">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Konten Utama -->
+        <div class="container mt-4">
+            <h4 class="mb-3">Daftar Antrean - <span id="userRoleBadge" class="badge bg-warning text-dark">Role</span></h4>
+            
+            <div id="loadingData" class="text-center my-5 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Mengambil data dari server...</p>
+            </div>
+
+            <!-- Tempat kartu approval akan dirender oleh JavaScript -->
+            <div id="listApproval">
+                <!-- Contoh Dummy Data (Nanti diganti dinamis dari Google Sheets) -->
+                <div class="card shadow-sm card-approval">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1">IQC-26-0030</h5>
+                            <p class="card-text text-muted mb-0"><small>Customer: SHARP | Waktu Input: 10:15</small></p>
+                        </div>
+                        <button class="btn btn-success" onclick="approveData('IQC-26-0030')">Approve</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= LOGIK JAVASCRIPT ================= -->
+    <script>
+        // Simulasi Fungsi Login
+        function prosesLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            
+            // NANTI DI SINI KITA AKAN PANGGIL API GOOGLE APPS SCRIPT
+            // Untuk sementara kita gunakan logika statis untuk test UI
+            
+            if(user === "sales1" && pass === "123") {
+                masukDashboard("Sopari", "SALES");
+            } else if (user === "qc1" && pass === "123") {
+                masukDashboard("Budi", "QC");
+            } else if (user === "pd1" && pass === "123") {
+                masukDashboard("Andi", "PRODUKSI");
+            } else {
+                document.getElementById('loginAlert').classList.remove('d-none');
+            }
+        }
+
+        // Fungsi Transisi ke Dashboard
+        function masukDashboard(nama, role) {
+            // Sembunyikan Login, Munculkan Dashboard
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dashboard-section').style.display = 'block';
+            
+            // Update Teks di UI
+            document.getElementById('userGreeting').innerText = "Halo, " + nama;
+            document.getElementById('userRoleBadge').innerText = role;
+            
+            // Nanti di sini kita panggil fungsi fetch data ke Apps Script berdasarkan 'role'
+        }
+
+        // Fungsi Logout
+        function prosesLogout() {
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('dashboard-section').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginAlert').classList.add('d-none');
+        }
+
+        // Simulasi Fungsi Approve
+        function approveData(idLaporan) {
+            let konfirmasi = confirm("Yakin ingin melakukan Approve untuk " + idLaporan + "?");
+            if(konfirmasi) {
+                alert(idLaporan + " berhasil di-approve! (Nanti ini akan mengirim data ke Google Sheets)");
+                // Logika hapus card dari layar setelah sukses approve
+            }
+        }
+    </script>
+</body>
+</html>
