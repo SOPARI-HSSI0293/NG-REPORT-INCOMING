@@ -4,28 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Approval - PT. HSSI</title>
-    
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
     <style>
-        body {
-            background-color: #f4f7f6;
-        }
-        #dashboard-section {
-            display: none; 
-        }
-        .card-approval {
-            border-left: 5px solid #0d6efd;
-            margin-bottom: 15px;
-        }
+        body { background-color: #f4f7f6; }
+        #dashboard-section { display: none; }
+        .card-approval { border-left: 5px solid #0d6efd; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-
-    <!-- ================= BAGIAN LOGIN ================= -->
+    <!-- BAGIAN LOGIN -->
     <div class="container mt-5" id="login-section">
         <div class="row justify-content-center">
             <div class="col-md-5">
@@ -44,7 +32,6 @@
                                 <label for="password" class="form-label">Password</label>
                                 <input type="password" class="form-control" id="password" required>
                             </div>
-                            
                             <button type="button" class="btn btn-primary w-100" id="btnLogin" onclick="prosesLogin()">
                                 <span id="loginText">Login</span>
                                 <span id="loginSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
@@ -57,7 +44,7 @@
         </div>
     </div>
 
-    <!-- ================= BAGIAN DASHBOARD ================= -->
+    <!-- BAGIAN DASHBOARD -->
     <div id="dashboard-section">
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
             <div class="container">
@@ -74,18 +61,15 @@
             
             <div id="loadingData" class="text-center my-5 d-none">
                 <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2 text-muted">Memproses data...</p>
+                <p class="mt-2 text-muted">Mengambil data antrean real-time...</p>
             </div>
 
-            <!-- Tempat kartu approval akan dirender -->
             <div id="listApproval"></div>
         </div>
     </div>
 
-    <!-- Bootstrap Bundle JS (Wajib agar Dropdown berfungsi) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- ================= LOGIK JAVASCRIPT ================= -->
     <script>
         const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbw8II8xY8CS8mz5kIqI0FMw4HthAzQqINqwMBw73TcYO7or348xH2gQQzRk3C7uokJlzA/exec";
 
@@ -95,10 +79,7 @@
             const alertBox = document.getElementById('loginAlert');
             const btnLogin = document.getElementById('btnLogin');
             
-            if(!user || !pass) {
-                tampilkanError("Username dan Password wajib diisi.");
-                return;
-            }
+            if(!user || !pass) return tampilkanError("Username dan Password wajib diisi.");
 
             alertBox.classList.add('d-none');
             btnLogin.disabled = true;
@@ -142,11 +123,9 @@
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('dashboard-section').style.display = 'block';
             
-            const namaFormat = nama.charAt(0).toUpperCase() + nama.slice(1);
-            document.getElementById('userGreeting').innerText = "Halo, " + namaFormat;
+            document.getElementById('userGreeting').innerText = "Halo, " + nama.charAt(0).toUpperCase() + nama.slice(1);
             document.getElementById('userRoleBadge').innerText = role.toUpperCase();
 
-            // Memuat daftar antrean
             loadData(role.toUpperCase());
         }
 
@@ -160,6 +139,88 @@
             document.getElementById('listApproval').innerHTML = '';
         }
 
+        function loadData(role) {
+            const listContainer = document.getElementById('listApproval');
+            const loadingIndicator = document.getElementById('loadingData');
+            
+            listContainer.innerHTML = '';
+            loadingIndicator.classList.remove('d-none');
+
+            fetch(URL_APPS_SCRIPT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: "getData", role: role })
+            })
+            .then(response => response.json())
+            .then(result => {
+                loadingIndicator.classList.add('d-none');
+                if (result.status === "success") {
+                    renderCards(result.data.items, role);
+                } else {
+                    listContainer.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
+                }
+            })
+            .catch(error => {
+                loadingIndicator.classList.add('d-none');
+                listContainer.innerHTML = `<div class="alert alert-danger">Gagal menghubungi server untuk mengambil data.</div>`;
+            });
+        }
+
+        function renderCards(items, role) {
+            const listContainer = document.getElementById('listApproval');
+            
+            if (!items || items.length === 0) {
+                listContainer.innerHTML = '<div class="alert alert-info">Tidak ada antrean approval untuk Anda saat ini.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                let btnApprovalHTML = '';
+
+                if (role === 'SALES') {
+                    btnApprovalHTML = `
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-check-circle"></i> Approve Action
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG Claim Insurance', this)">OK Proses, Part NG Claim Insurance</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG Claim Maker', this)">OK Proses, Part NG Claim Maker</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG ScrapDown', this)">OK Proses, Part NG ScrapDown</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="approveData('${item.id}', 'Claim to Maker', this)">Claim to Maker</a></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="approveData('${item.id}', 'Claim to Insurance', this)">Claim to Insurance</a></li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    btnApprovalHTML = `
+                        <button class="btn btn-success" onclick="approveData('${item.id}', 'Approved', this)" title="Approve">
+                            <i class="bi bi-check-circle"></i> Approve
+                        </button>
+                    `;
+                }
+
+                const cardHTML = `
+                    <div class="card shadow-sm card-approval" id="card-${item.id}">
+                        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                            <div class="mb-3 mb-md-0">
+                                <h5 class="card-title mb-1">${item.id}</h5>
+                                <p class="card-text text-muted mb-0"><small>${item.detail}</small></p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary" onclick="previewData('${item.id}', this)" title="Preview Data">
+                                    <i class="bi bi-file-earmark-text"></i> <span class="btn-text">Preview</span>
+                                </button>
+                                ${btnApprovalHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                listContainer.innerHTML += cardHTML;
+            });
+        }
+
         function previewData(idLaporan, btnElement) {
             const btnText = btnElement.querySelector('.btn-text');
             const originalIcon = btnElement.querySelector('i').className;
@@ -167,6 +228,10 @@
             btnElement.disabled = true;
             btnElement.querySelector('i').className = "spinner-border spinner-border-sm";
             btnText.innerText = " Mencari...";
+
+            // Buka tab baru SEBELUM fetch untuk mencegah pop-up blocker browser
+            const previewWindow = window.open('', '_blank');
+            if (previewWindow) previewWindow.document.write('Memuat dokumen PDF untuk ' + idLaporan + '...');
 
             fetch(URL_APPS_SCRIPT, {
                 method: 'POST',
@@ -180,8 +245,13 @@
                 btnText.innerText = "Preview";
 
                 if (result.status === "success") {
-                    window.open(result.data.url, '_blank');
+                    if (previewWindow) {
+                        previewWindow.location.href = result.data.url; // Arahkan tab kosong tadi ke PDF
+                    } else {
+                        window.open(result.data.url, '_blank');
+                    }
                 } else {
+                    if (previewWindow) previewWindow.close(); // Tutup tab kosong jika gagal
                     alert(result.message);
                 }
             })
@@ -189,16 +259,15 @@
                 btnElement.disabled = false;
                 btnElement.querySelector('i').className = originalIcon;
                 btnText.innerText = "Preview";
+                if (previewWindow) previewWindow.close();
                 alert("Gagal menghubungi server untuk preview.");
             });
         }
 
-        // --- FUNGSI BARU: APPROVE DATA DENGAN STATUS SPESIFIK ---
         function approveData(idLaporan, statusApproval, btnElement) {
             let konfirmasi = confirm(`Yakin ingin memproses ID: ${idLaporan}\ndengan status: "${statusApproval}"?`);
             if(!konfirmasi) return;
 
-            // Mengubah tampilan kartu menjadi mode loading
             const cardElement = document.getElementById('card-' + idLaporan);
             cardElement.style.opacity = '0.5';
             
@@ -216,9 +285,12 @@
             .then(response => response.json())
             .then(result => {
                 if (result.status === "success") {
-                    // Hilangkan kartu dari layar jika sukses
                     cardElement.remove();
-                    alert("Berhasil di-approve!");
+                    // Cek jika antrean habis
+                    const container = document.getElementById('listApproval');
+                    if(container.children.length === 0) {
+                        container.innerHTML = '<div class="alert alert-info">Tidak ada antrean approval untuk Anda saat ini.</div>';
+                    }
                 } else {
                     cardElement.style.opacity = '1';
                     alert("Gagal: " + result.message);
@@ -227,87 +299,6 @@
             .catch(error => {
                 cardElement.style.opacity = '1';
                 alert("Terjadi kesalahan jaringan saat menyimpan approval.");
-            });
-        }
-
-// --- FUNGSI MENGGAMBAR KARTU (DATA REAL DARI DATABASE) ---
-        function loadData(role) {
-            const listContainer = document.getElementById('listApproval');
-            const loadingData = document.getElementById('loadingData');
-            
-            // Tampilkan loading, bersihkan list
-            listContainer.innerHTML = '';
-            loadingData.classList.remove('d-none');
-
-            fetch(URL_APPS_SCRIPT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: "getData", role: role })
-            })
-            .then(response => response.json())
-            .then(result => {
-                loadingData.classList.add('d-none'); // Sembunyikan loading
-
-                if (result.status === "success") {
-                    const dataItems = result.data.items;
-                    
-                    if (dataItems.length === 0) {
-                        listContainer.innerHTML = '<div class="alert alert-info">Semua tugas telah selesai. Tidak ada antrean data.</div>';
-                        return;
-                    }
-
-                    dataItems.forEach(item => {
-                        let btnApprovalHTML = '';
-
-                        if (role === 'SALES') {
-                            btnApprovalHTML = `
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-check-circle"></i> Approve Action
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow">
-                                        <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG Claim Insurance', this)">OK Proses, Part NG Claim Insurance</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG Claim Maker', this)">OK Proses, Part NG Claim Maker</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG ScrapDown', this)">OK Proses, Part NG ScrapDown</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="approveData('${item.id}', 'Claim to Maker', this)">Claim to Maker</a></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="approveData('${item.id}', 'Claim to Insurance', this)">Claim to Insurance</a></li>
-                                    </ul>
-                                </div>
-                            `;
-                        } else {
-                            btnApprovalHTML = `
-                                <button class="btn btn-success" onclick="approveData('${item.id}', 'Approved', this)" title="Approve">
-                                    <i class="bi bi-check-circle"></i> Approve
-                                </button>
-                            `;
-                        }
-
-                        const cardHTML = `
-                            <div class="card shadow-sm card-approval" id="card-${item.id}">
-                                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-                                    <div class="mb-3 mb-md-0">
-                                        <h5 class="card-title mb-1">${item.id}</h5>
-                                        <p class="card-text text-muted mb-0"><small>${item.detail}</small></p>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-outline-secondary" onclick="previewData('${item.id}', this)" title="Preview Data">
-                                            <i class="bi bi-file-earmark-text"></i> <span class="btn-text">Preview</span>
-                                        </button>
-                                        ${btnApprovalHTML}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        listContainer.innerHTML += cardHTML;
-                    });
-                } else {
-                    listContainer.innerHTML = `<div class="alert alert-danger">Error: ${result.message}</div>`;
-                }
-            })
-            .catch(error => {
-                loadingData.classList.add('d-none');
-                listContainer.innerHTML = '<div class="alert alert-danger">Gagal menghubungi server untuk mengambil antrean.</div>';
             });
         }
     </script>
