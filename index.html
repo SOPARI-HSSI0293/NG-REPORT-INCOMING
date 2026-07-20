@@ -1,303 +1,541 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Approval - PT. HSSI</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        body { background-color: #f4f7f6; }
-        #dashboard-section { display: none; }
-        .card-approval { border-left: 5px solid #0d6efd; margin-bottom: 15px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IQC Approval System</title>
+<style>
+  :root{
+    --blue:#2563eb;
+    --blue-dark:#1d4ed8;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --border:#e2e8f0;
+    --text:#1e293b;
+    --muted:#64748b;
+    --green:#16a34a;
+    --red:#dc2626;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+
+  /* ---------- LOGIN ---------- */
+  #loginScreen{
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .login-card{
+    background:var(--card);
+    padding:40px 36px;
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    width:340px;
+  }
+  .login-card h1{
+    font-size:20px;
+    margin:0 0 4px;
+    text-align:center;
+  }
+  .login-card p{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    margin:0 0 24px;
+  }
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:14px;
+    outline:none;
+  }
+  .field input:focus{border-color:var(--blue);}
+  .btn{
+    width:100%;
+    padding:11px;
+    border:none;
+    border-radius:8px;
+    background:var(--blue);
+    color:#fff;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .btn:hover{background:var(--blue-dark);}
+  .btn:disabled{opacity:.6;cursor:not-allowed;}
+  .error-msg{
+    color:var(--red);
+    font-size:13px;
+    margin-top:10px;
+    text-align:center;
+    min-height:16px;
+  }
+
+  /* ---------- APP SHELL ---------- */
+  #appScreen{display:none;}
+  header{
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  header h2{margin:0;font-size:17px;}
+  .user-chip{
+    display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);
+  }
+  .role-badge{
+    background:#e0e7ff;color:var(--blue-dark);
+    padding:3px 10px;border-radius:999px;font-weight:600;font-size:12px;
+  }
+  .logout-btn{
+    background:none;border:1px solid var(--border);
+    padding:6px 12px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text);
+  }
+  .logout-btn:hover{background:#f1f5f9;}
+
+  main{padding:24px;max-width:1200px;margin:0 auto;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    background:var(--card);
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  }
+  th,td{
+    padding:12px 14px;
+    text-align:left;
+    font-size:13px;
+    border-bottom:1px solid var(--border);
+  }
+  th{
+    background:#f8fafc;
+    color:var(--muted);
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:.03em;
+  }
+  tr:last-child td{border-bottom:none;}
+  tr.clickable{cursor:pointer;}
+  tr.clickable:hover{background:#f8fafc;}
+  .badge{
+    display:inline-block;padding:3px 9px;border-radius:6px;font-size:12px;font-weight:600;
+  }
+  .badge.done{background:#dcfce7;color:var(--green);}
+  .badge.pending{background:#fef3c7;color:#b45309;}
+
+  /* ---------- DETAIL MODAL ---------- */
+  .overlay{
+    display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    background:var(--card);border-radius:14px;width:100%;max-width:900px;
+    max-height:90vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.2);
+  }
+  .modal-header{
+    padding:16px 22px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .modal-header h3{margin:0;font-size:16px;}
+  .modal-close{
+    border:none;background:none;font-size:20px;cursor:pointer;color:var(--muted);
+  }
+  .modal-body{padding:20px 22px;}
+  .pdf-frame{
+    width:100%;height:480px;border:1px solid var(--border);border-radius:8px;margin-bottom:20px;
+  }
+  .status-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;
+  }
+  .status-box{
+    border:1px solid var(--border);border-radius:10px;padding:14px;
+  }
+  .status-box h4{margin:0 0 8px;font-size:13px;color:var(--muted);}
+  .status-box .val{font-size:14px;font-weight:600;}
+  .status-box .time{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .action-panel{
+    border-top:1px solid var(--border);padding-top:18px;
+  }
+  select.dropdown{
+    width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;
+    font-size:14px;margin-bottom:12px;
+  }
+  .action-btn{
+    padding:10px 20px;border:none;border-radius:8px;background:var(--blue);
+    color:#fff;font-weight:600;cursor:pointer;font-size:14px;
+  }
+  .action-btn:hover{background:var(--blue-dark);}
+  .action-btn:disabled{opacity:.6;cursor:not-allowed;}
+  .already-done{
+    background:#f0fdf4;border:1px solid #bbf7d0;color:var(--green);
+    padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;
+  }
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:#1e293b;color:#fff;padding:10px 18px;border-radius:8px;
+    font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:100;
+  }
+  .toast.show{opacity:1;}
+  .loading{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+</style>
 </head>
 <body>
-    <div class="container mt-5" id="login-section">
-        <div class="row justify-content-center">
-            <div class="col-md-5">
-                <div class="card shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="text-center mb-4">
-                            <h3 class="fw-bold text-primary">PT. HSSI</h3>
-                            <p class="text-muted">Portal Approval Terintegrasi</p>
-                        </div>
-                        <form id="loginForm">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" required>
-                            </div>
-                            <button type="button" class="btn btn-primary w-100" id="btnLogin" onclick="prosesLogin()">
-                                <span id="loginText">Login</span>
-                                <span id="loginSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            </button>
-                        </form>
-                        <div id="loginAlert" class="alert alert-danger mt-3 d-none" role="alert"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginScreen">
+  <form class="login-card" id="loginForm">
+    <h1>IQC Approval System</h1>
+    <p>Silakan login untuk melanjutkan</p>
+    <div class="field">
+      <label for="username">Username</label>
+      <input type="text" id="username" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="btn" id="loginBtn">Login</button>
+    <div class="error-msg" id="loginError"></div>
+  </form>
+</div>
+
+<!-- ============ APP SCREEN ============ -->
+<div id="appScreen">
+  <header>
+    <h2>IQC Approval System</h2>
+    <div class="user-chip">
+      <span id="userLabel"></span>
+      <span class="role-badge" id="roleBadge"></span>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
+    </div>
+  </header>
+  <main>
+    <div id="tableWrap" class="loading">Memuat data...</div>
+  </main>
+</div>
+
+<!-- ============ DETAIL MODAL ============ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Detail Inspection</h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   KONFIGURASI - GANTI dengan Web App URL hasil deploy GAS
+========================================================= */
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbx7HY0fkNObclTbPV4PU2_r0io4nHNK96Vwjv1Oxsv7xG2zqjy6rxZsquQBDTTk1kNyHQ/exec';
+
+let currentUser = null;   // { username, role }
+let allData = [];
+let dropdownOptions = [];
+
+/* ---------- API helper (text/plain avoids CORS preflight) ---------- */
+async function apiCall(payload) {
+  const res = await fetch(GAS_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+/* ---------- Session persistence ---------- */
+function saveSession(user){ sessionStorage.setItem('iqc_user', JSON.stringify(user)); }
+function loadSession(){
+  const s = sessionStorage.getItem('iqc_user');
+  return s ? JSON.parse(s) : null;
+}
+function clearSession(){ sessionStorage.removeItem('iqc_user'); }
+
+/* ---------- Toast ---------- */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+/* ---------- LOGIN ---------- */
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('loginBtn');
+  const errBox = document.getElementById('loginError');
+  errBox.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+
+  try {
+    const result = await apiCall({ action: 'login', username, password });
+    if (result.success) {
+      currentUser = { username: result.username, role: result.role };
+      saveSession(currentUser);
+      enterApp();
+    } else {
+      errBox.textContent = result.message || 'Login gagal';
+    }
+  } catch (err) {
+    errBox.textContent = 'Gagal terhubung ke server. Periksa GAS_API_URL.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  clearSession();
+  currentUser = null;
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginForm').reset();
+});
+
+/* ---------- ENTER APP ---------- */
+function enterApp(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+  document.getElementById('userLabel').textContent = currentUser.username;
+  document.getElementById('roleBadge').textContent = currentUser.role;
+  loadData();
+}
+
+/* ---------- LOAD DATA ---------- */
+async function loadData(){
+  const wrap = document.getElementById('tableWrap');
+  wrap.innerHTML = '<div class="loading">Memuat data...</div>';
+  try {
+    const result = await apiCall({ action: 'getData' });
+    if (!result.success) {
+      wrap.innerHTML = '<div class="loading">Gagal memuat data: ' + result.message + '</div>';
+      return;
+    }
+    allData = result.data;
+    dropdownOptions = result.dropdownOptions || [];
+    renderTable();
+  } catch (err) {
+    wrap.innerHTML = '<div class="loading">Gagal terhubung ke server.</div>';
+  }
+}
+
+/* ---------- RENDER TABLE ---------- */
+function renderTable(){
+  const wrap = document.getElementById('tableWrap');
+  if (allData.length === 0) {
+    wrap.innerHTML = '<div class="loading">Belum ada data inspection.</div>';
+    return;
+  }
+
+  let rows = allData.map(d => {
+    const salesDone = !!d.Approval;
+    const qcDone = !!d.Mengetahui_QC;
+    const pdDone = !!d.Approve_PD;
+    return `
+      <tr class="clickable" onclick="openDetail('${escapeHtml(d.ID_Inspection)}')">
+        <td>${escapeHtml(d.ID_Inspection)}</td>
+        <td>${badge(salesDone, d.Status_Approval_Sales || 'Belum')}</td>
+        <td>${badge(qcDone, qcDone ? 'Sudah' : 'Belum')}</td>
+        <td>${badge(pdDone, pdDone ? 'Sudah' : 'Belum')}</td>
+      </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>ID Inspection</th>
+          <th>Sales</th>
+          <th>QC</th>
+          <th>Production</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function badge(done, label){
+  return `<span class="badge ${done ? 'done' : 'pending'}">${escapeHtml(label)}</span>`;
+}
+
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
+}
+
+/* ---------- DETAIL MODAL ---------- */
+function openDetail(id){
+  const d = allData.find(x => String(x.ID_Inspection) === String(id));
+  if (!d) return;
+
+  document.getElementById('modalTitle').textContent = 'Detail Inspection: ' + d.ID_Inspection;
+
+  const pdfEmbedUrl = toPdfEmbedUrl(d.PDF_URL);
+
+  let actionHtml = '';
+  const role = currentUser.role;
+
+  if (role === 'Sales') {
+    if (d.Approval) {
+      actionHtml = `<div class="already-done">✓ Sudah di-approve oleh ${escapeHtml(d.Approval)} pada ${escapeHtml(d.Waktu_Approval_Sales)}</div>`;
+    } else {
+      const options = dropdownOptions.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+      actionHtml = `
+        <select class="dropdown" id="salesStatus">
+          <option value="">-- Pilih Status Approval --</option>
+          ${options}
+        </select>
+        <button class="action-btn" onclick="submitApproval('${escapeHtml(d.ID_Inspection)}')">Simpan Approval</button>`;
+    }
+  } else if (role === 'QC') {
+    if (d.Mengetahui_QC) {
+      actionHtml = `<div class="already-done">✓ Sudah diketahui oleh ${escapeHtml(d.Mengetahui_QC)} pada ${escapeHtml(d.Waktu_QC)}</div>`;
+    } else {
+      actionHtml = `<button class="action-btn" onclick="submitApproval('${escapeHtml(d.ID_Inspection)}')">Mengetahui</button>`;
+    }
+  } else if (role === 'Production') {
+    if (d.Approve_PD) {
+      actionHtml = `<div class="already-done">✓ Sudah di-approve oleh ${escapeHtml(d.Approve_PD)} pada ${escapeHtml(d.Waktu_Approval_PD)}</div>`;
+    } else {
+      actionHtml = `<button class="action-btn" onclick="submitApproval('${escapeHtml(d.ID_Inspection)}')">Approve</button>`;
+    }
+  } else {
+    actionHtml = `<div class="already-done">Role Anda tidak memiliki hak approval di sini.</div>`;
+  }
+
+  document.getElementById('modalBody').innerHTML = `
+    ${pdfEmbedUrl
+      ? `<iframe class="pdf-frame" src="${pdfEmbedUrl}"></iframe>`
+      : `<div class="loading">PDF tidak tersedia untuk ID ini.</div>`}
+
+    <div class="status-grid">
+      <div class="status-box">
+        <h4>Sales</h4>
+        <div class="val">${escapeHtml(d.Status_Approval_Sales || '-')}</div>
+        <div class="val">${escapeHtml(d.Approval || '-')}</div>
+        <div class="time">${escapeHtml(d.Waktu_Approval_Sales || '')}</div>
+      </div>
+      <div class="status-box">
+        <h4>QC</h4>
+        <div class="val">${escapeHtml(d.Mengetahui_QC || '-')}</div>
+        <div class="time">${escapeHtml(d.Waktu_QC || '')}</div>
+      </div>
+      <div class="status-box">
+        <h4>Production</h4>
+        <div class="val">${escapeHtml(d.Approve_PD || '-')}</div>
+        <div class="time">${escapeHtml(d.Waktu_Approval_PD || '')}</div>
+      </div>
     </div>
 
-    <div id="dashboard-section">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-            <div class="container">
-                <span class="navbar-brand mb-0 h1">Portal Approval</span>
-                <div class="d-flex align-items-center">
-                    <span class="text-white me-3" id="userGreeting">Halo, User</span>
-                    <button class="btn btn-sm btn-light" onclick="prosesLogout()">Logout</button>
-                </div>
-            </div>
-        </nav>
+    <div class="action-panel">${actionHtml}</div>
+  `;
 
-        <div class="container mt-4">
-            <h4 class="mb-3">Daftar Antrean - <span id="userRoleBadge" class="badge bg-warning text-dark">Role</span></h4>
-            
-            <div id="loadingData" class="text-center my-5 d-none">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2 text-muted">Mengambil data antrean real-time...</p>
-            </div>
+  document.getElementById('overlay').classList.add('open');
+}
 
-            <div id="listApproval"></div>
-        </div>
-    </div>
+/* Convert a stored PDF value (full URL or bare Drive file ID) into an embeddable preview URL */
+function toPdfEmbedUrl(value){
+  if (!value) return '';
+  const v = String(value).trim();
+  if (v.includes('drive.google.com')) {
+    // normalize any drive share link to the /preview form
+    const idMatch = v.match(/[-\w]{25,}/);
+    if (idMatch) return `https://drive.google.com/file/d/${idMatch[0]}/preview`;
+    return v;
+  }
+  if (/^[-\w]{25,}$/.test(v)) {
+    // looks like a bare Drive file ID
+    return `https://drive.google.com/file/d/${v}/preview`;
+  }
+  // assume it's a direct PDF URL
+  return v;
+}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'overlay') closeModal();
+});
+function closeModal(){
+  document.getElementById('overlay').classList.remove('open');
+}
 
-    <script>
-        const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbw8II8xY8CS8mz5kIqI0FMw4HthAzQqINqwMBw73TcYO7or348xH2gQQzRk3C7uokJlzA/exec";
+/* ---------- SUBMIT APPROVAL ---------- */
+async function submitApproval(id){
+  const role = currentUser.role;
+  let statusValue = '';
 
-        function prosesLogin() {
-            const user = document.getElementById('username').value.trim().toLowerCase();
-            const pass = document.getElementById('password').value;
-            const alertBox = document.getElementById('loginAlert');
-            const btnLogin = document.getElementById('btnLogin');
-            
-            if(!user || !pass) return tampilkanError("Username dan Password wajib diisi.");
+  if (role === 'Sales') {
+    const sel = document.getElementById('salesStatus');
+    statusValue = sel ? sel.value : '';
+    if (!statusValue) {
+      showToast('Pilih status approval terlebih dahulu');
+      return;
+    }
+  }
 
-            alertBox.classList.add('d-none');
-            btnLogin.disabled = true;
-            document.getElementById('loginText').innerText = "Memproses...";
-            document.getElementById('loginSpinner').classList.remove('d-none');
-            
-            fetch(URL_APPS_SCRIPT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: "login", username: user, password: pass })
-            })
-            .then(response => response.json())
-            .then(result => {
-                btnLogin.disabled = false;
-                document.getElementById('loginText').innerText = "Login";
-                document.getElementById('loginSpinner').classList.add('d-none');
+  const btn = document.querySelector('.action-panel .action-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
 
-                if(result.status === "success") {
-                    sessionStorage.setItem("userName", result.data.nama);
-                    sessionStorage.setItem("userRole", result.data.role);
-                    masukDashboard(result.data.nama, result.data.role);
-                } else {
-                    tampilkanError(result.message);
-                }
-            })
-            .catch(error => {
-                btnLogin.disabled = false;
-                document.getElementById('loginText').innerText = "Login";
-                document.getElementById('loginSpinner').classList.add('d-none');
-                tampilkanError("Terjadi kesalahan jaringan.");
-            });
-        }
+  try {
+    const result = await apiCall({
+      action: 'approve',
+      id, role,
+      username: currentUser.username,
+      statusValue
+    });
+    if (result.success) {
+      showToast('Berhasil disimpan');
+      closeModal();
+      loadData();
+    } else {
+      showToast(result.message || 'Gagal menyimpan');
+      if (btn) { btn.disabled = false; btn.textContent = role === 'QC' ? 'Mengetahui' : 'Simpan Approval'; }
+    }
+  } catch (err) {
+    showToast('Gagal terhubung ke server');
+    if (btn) { btn.disabled = false; }
+  }
+}
 
-        function tampilkanError(pesan) {
-            const alertBox = document.getElementById('loginAlert');
-            alertBox.innerText = pesan;
-            alertBox.classList.remove('d-none');
-        }
-
-        function masukDashboard(nama, role) {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('dashboard-section').style.display = 'block';
-            
-            document.getElementById('userGreeting').innerText = "Halo, " + nama.charAt(0).toUpperCase() + nama.slice(1);
-            document.getElementById('userRoleBadge').innerText = role.toUpperCase();
-
-            loadData(role.toUpperCase());
-        }
-
-        function prosesLogout() {
-            sessionStorage.clear();
-            document.getElementById('login-section').style.display = 'block';
-            document.getElementById('dashboard-section').style.display = 'none';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('loginAlert').classList.add('d-none');
-            document.getElementById('listApproval').innerHTML = '';
-        }
-
-        function loadData(role) {
-            const listContainer = document.getElementById('listApproval');
-            const loadingIndicator = document.getElementById('loadingData');
-            
-            listContainer.innerHTML = '';
-            loadingIndicator.classList.remove('d-none');
-
-            fetch(URL_APPS_SCRIPT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: "getData", role: role })
-            })
-            .then(response => response.json())
-            .then(result => {
-                loadingIndicator.classList.add('d-none');
-                if (result.status === "success") {
-                    renderCards(result.data.items, role);
-                } else {
-                    listContainer.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
-                }
-            })
-            .catch(error => {
-                loadingIndicator.classList.add('d-none');
-                listContainer.innerHTML = `<div class="alert alert-danger">Gagal menghubungi server untuk mengambil data.</div>`;
-            });
-        }
-
-        function renderCards(items, role) {
-            const listContainer = document.getElementById('listApproval');
-            
-            if (!items || items.length === 0) {
-                listContainer.innerHTML = '<div class="alert alert-info">Tidak ada antrean approval untuk Anda saat ini.</div>';
-                return;
-            }
-
-            items.forEach(item => {
-                let btnApprovalHTML = '';
-
-                if (role === 'SALES') {
-                    btnApprovalHTML = `
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-check-circle"></i> Approve Action
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow">
-                                <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG Claim Insurance', this)">OK Proses, Part NG Claim Insurance</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG Claim Maker', this)">OK Proses, Part NG Claim Maker</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="approveData('${item.id}', 'OK Proses, Part NG ScrapDown', this)">OK Proses, Part NG ScrapDown</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#" onclick="approveData('${item.id}', 'Claim to Maker', this)">Claim to Maker</a></li>
-                                <li><a class="dropdown-item text-danger" href="#" onclick="approveData('${item.id}', 'Claim to Insurance', this)">Claim to Insurance</a></li>
-                            </ul>
-                        </div>
-                    `;
-                } else {
-                    btnApprovalHTML = `
-                        <button class="btn btn-success" onclick="approveData('${item.id}', 'Approve', this)" title="Approve">
-                            <i class="bi bi-check-circle"></i> Approve
-                        </button>
-                    `;
-                }
-
-                const cardHTML = `
-                    <div class="card shadow-sm card-approval" id="card-${item.id}">
-                        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-                            <div class="mb-3 mb-md-0">
-                                <h5 class="card-title mb-1">${item.id}</h5>
-                                <p class="card-text text-muted mb-0"><small>${item.detail}</small></p>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-outline-secondary" onclick="previewData('${item.id}', this)" title="Preview Data">
-                                    <i class="bi bi-file-earmark-text"></i> <span class="btn-text">Preview</span>
-                                </button>
-                                ${btnApprovalHTML}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                listContainer.innerHTML += cardHTML;
-            });
-        }
-
-        function previewData(idLaporan, btnElement) {
-            const btnText = btnElement.querySelector('.btn-text');
-            const originalIcon = btnElement.querySelector('i').className;
-            
-            btnElement.disabled = true;
-            btnElement.querySelector('i').className = "spinner-border spinner-border-sm";
-            btnText.innerText = " Mencari...";
-
-            // Buka tab baru SEBELUM fetch untuk mencegah pop-up blocker browser
-            const previewWindow = window.open('', '_blank');
-            if (previewWindow) previewWindow.document.write('Memuat dokumen PDF untuk ' + idLaporan + '...');
-
-            fetch(URL_APPS_SCRIPT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: "getPreview", id_laporan: idLaporan })
-            })
-            .then(response => response.json())
-            .then(result => {
-                btnElement.disabled = false;
-                btnElement.querySelector('i').className = originalIcon;
-                btnText.innerText = "Preview";
-
-                if (result.status === "success") {
-                    if (previewWindow) {
-                        previewWindow.location.href = result.data.url;
-                    } else {
-                        window.open(result.data.url, '_blank');
-                    }
-                } else {
-                    if (previewWindow) previewWindow.close();
-                    alert(result.message);
-                }
-            })
-            .catch(error => {
-                btnElement.disabled = false;
-                btnElement.querySelector('i').className = originalIcon;
-                btnText.innerText = "Preview";
-                if (previewWindow) previewWindow.close();
-                alert("Gagal menghubungi server untuk preview.");
-            });
-        }
-
-        function approveData(idLaporan, statusApproval, btnElement) {
-            let konfirmasi = confirm(`Yakin ingin memproses ID: ${idLaporan}\ndengan status: "${statusApproval}"?`);
-            if(!konfirmasi) return;
-
-            const cardElement = document.getElementById('card-' + idLaporan);
-            cardElement.style.opacity = '0.5';
-            
-            fetch(URL_APPS_SCRIPT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ 
-                    action: "approve", 
-                    id_laporan: idLaporan,
-                    role: sessionStorage.getItem("userRole"),
-                    username: sessionStorage.getItem("userName"),
-                    status: statusApproval 
-                })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === "success") {
-                    cardElement.remove();
-                    const container = document.getElementById('listApproval');
-                    if(container.children.length === 0) {
-                        container.innerHTML = '<div class="alert alert-info">Tidak ada antrean approval untuk Anda saat ini.</div>';
-                    }
-                } else {
-                    cardElement.style.opacity = '1';
-                    alert("Gagal: " + result.message);
-                }
-            })
-            .catch(error => {
-                cardElement.style.opacity = '1';
-                alert("Terjadi kesalahan jaringan saat menyimpan approval.");
-            });
-        }
-    </script>
+/* ---------- INIT: restore session on refresh ---------- */
+(function init(){
+  const s = loadSession();
+  if (s) {
+    currentUser = s;
+    enterApp();
+  }
+})();
+</script>
 </body>
 </html>
