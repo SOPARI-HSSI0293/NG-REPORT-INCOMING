@@ -259,6 +259,15 @@ const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbx7HY0fkNObclTbPV4P
 let currentUser = null;   // { username, role }
 let allData = [];
 let dropdownOptions = [];
+let showCompleted = false;
+
+/* Kolom Waktu_ yang relevan untuk menentukan status "sudah di-approve" per role */
+function getRoleWaktuField(role){
+  if (role === 'Sales') return 'Waktu_Approval_Sales';
+  if (role === 'QC') return 'Waktu_QC';
+  if (role === 'Production') return 'Waktu_Approval_PD';
+  return null;
+}
 
 /* ---------- API helper (text/plain avoids CORS preflight) ---------- */
 async function apiCall(payload) {
@@ -352,12 +361,33 @@ async function loadData(){
 /* ---------- RENDER TABLE ---------- */
 function renderTable(){
   const wrap = document.getElementById('tableWrap');
-  if (allData.length === 0) {
-    wrap.innerHTML = '<div class="loading">Belum ada data inspection.</div>';
+
+  const waktuField = getRoleWaktuField(currentUser.role);
+  const isPending = (d) => waktuField ? !d[waktuField] : true;
+
+  const pendingList = waktuField ? allData.filter(isPending) : allData;
+  const completedList = waktuField ? allData.filter(d => !isPending(d)) : [];
+
+  const listToShow = showCompleted ? completedList : pendingList;
+
+  const toggleBtn = waktuField ? `
+    <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;color:var(--muted);">
+        ${showCompleted
+          ? `Menampilkan <b>${completedList.length}</b> data yang sudah di-approve`
+          : `Menampilkan <b>${pendingList.length}</b> data yang perlu di-approve`}
+      </span>
+      <button class="logout-btn" onclick="toggleCompleted()">
+        ${showCompleted ? '← Kembali ke daftar pending' : `Lihat yang sudah di-approve (${completedList.length})`}
+      </button>
+    </div>` : '';
+
+  if (listToShow.length === 0) {
+    wrap.innerHTML = toggleBtn + `<div class="loading">${showCompleted ? 'Belum ada data yang di-approve.' : 'Tidak ada data yang perlu di-approve. 🎉'}</div>`;
     return;
   }
 
-  let rows = allData.map(d => {
+  let rows = listToShow.map(d => {
     const salesDone = !!d.Approval;
     const qcDone = !!d.Mengetahui_QC;
     const pdDone = !!d.Approve_PD;
@@ -370,7 +400,7 @@ function renderTable(){
       </tr>`;
   }).join('');
 
-  wrap.innerHTML = `
+  wrap.innerHTML = toggleBtn + `
     <table>
       <thead>
         <tr>
@@ -382,6 +412,11 @@ function renderTable(){
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+function toggleCompleted(){
+  showCompleted = !showCompleted;
+  renderTable();
 }
 
 function badge(done, label){
